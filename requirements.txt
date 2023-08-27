@@ -1,0 +1,15 @@
+write api with actix that create html and css file base on incoming request
+
+- incoming request is {html: '...', css: '...'}
+- generate a unique folder name
+- check folder exists `current_working_dir/static/unique_folder_name`
+- if folder does not exists create that folder
+- create index.html and style.css under that unique folder
+- link style.css and index.html
+- response with this struct {code: 200, message: '...', url: 'http://localhost:8080/static/unique_folder_name/index.html'}
+- if any of the above step cause panic return response with {code: 500, message: "Internal Server Error"} with status 500
+
+
+write api with actix that create pdf from incoming request
+
+- incoming request is { url: 'http://...' }
