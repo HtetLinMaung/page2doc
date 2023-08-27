@@ -7,10 +7,11 @@ async fn index() -> impl Responder {
     "Page to Document server is online"
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Debug)]
 struct RequestBody {
     html: String,
     css: String,
+    file_name: String,
 }
 
 #[derive(serde::Serialize)]
@@ -22,6 +23,7 @@ struct ResponseBody {
 
 #[post("/create-report")]
 async fn create_files(body: web::Json<RequestBody>) -> impl Responder {
+    println!("[create-report] body: {:#?}", body);
     let unique_folder_name = Uuid::new_v4().to_string();
     let path = format!("static/{}", unique_folder_name);
 
@@ -59,12 +61,12 @@ async fn create_files(body: web::Json<RequestBody>) -> impl Responder {
     }
 
     let host_name = env::var("host_name").unwrap_or("http://localhost:8080".to_string());
-    println!("host_name: {host_name}");
     let url = format!(
         "{}/page2doc/static/{}/index.html",
         host_name, unique_folder_name
     );
-    let output_file = format!("{}/report.pdf", &path);
+
+    let output_file = format!("{}/{}", &path, &body.file_name);
     let command = Command::new("sitetopdf")
         .arg("-u")
         .arg(&url)
@@ -110,8 +112,8 @@ async fn create_files(body: web::Json<RequestBody>) -> impl Responder {
         code: 200,
         message: "Report created successfully".into(),
         url: Some(format!(
-            "{}/page2doc/static/{}/report.pdf",
-            host_name, unique_folder_name
+            "{}/page2doc/static/{}/{}",
+            host_name, unique_folder_name, body.file_name
         )),
     })
 }
