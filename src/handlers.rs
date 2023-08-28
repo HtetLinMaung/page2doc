@@ -12,6 +12,21 @@ struct RequestBody {
     html: String,
     css: String,
     file_name: String,
+    format: Option<String>,
+    landscape: Option<bool>,
+    scale: Option<String>,
+    margin_top: Option<String>,
+    margin_bottom: Option<String>,
+    margin_right: Option<String>,
+    margin_left: Option<String>,
+    header_template: Option<String>,
+    footer_template: Option<String>,
+    display_header_footer: Option<bool>,
+    prefer_css_page_size: Option<bool>,
+    page_ranges: Option<String>,
+    ignore_http_errors: Option<bool>,
+    wait_until: Option<String>,
+    timeout: Option<String>,
 }
 
 #[derive(serde::Serialize)]
@@ -67,12 +82,64 @@ async fn create_files(body: web::Json<RequestBody>) -> impl Responder {
     );
 
     let output_file = format!("{}/{}", &path, &body.file_name);
-    let command = Command::new("sitetopdf")
-        .arg("-u")
-        .arg(&url)
-        .arg("-o")
-        .arg(output_file)
-        .output();
+    let mut sitetopdf = Command::new("sitetopdf");
+    sitetopdf.arg("-u").arg(&url).arg("-o").arg(output_file);
+
+    if let Some(format) = &body.format {
+        sitetopdf.arg("--format").arg(format);
+    }
+    if let Some(landscape) = body.landscape {
+        if landscape {
+            sitetopdf.arg("--landscape");
+        }
+    }
+    if let Some(scale) = &body.scale {
+        sitetopdf.arg("--scale").arg(scale);
+    }
+    if let Some(margin_top) = &body.margin_top {
+        sitetopdf.arg("--margin-top").arg(margin_top);
+    }
+    if let Some(margin_bottom) = &body.margin_bottom {
+        sitetopdf.arg("--margin-bottom").arg(margin_bottom);
+    }
+    if let Some(margin_right) = &body.margin_right {
+        sitetopdf.arg("--margin-right").arg(margin_right);
+    }
+    if let Some(margin_left) = &body.margin_left {
+        sitetopdf.arg("--margin-left").arg(margin_left);
+    }
+    if let Some(header_template) = &body.header_template {
+        sitetopdf.arg("--header-template").arg(header_template);
+    }
+    if let Some(footer_template) = &body.footer_template {
+        sitetopdf.arg("--footer-template").arg(footer_template);
+    }
+    if let Some(display_header_footer) = body.display_header_footer {
+        if display_header_footer {
+            sitetopdf.arg("--display-header-footer");
+        }
+    }
+    if let Some(prefer_css_page_size) = body.prefer_css_page_size {
+        if prefer_css_page_size {
+            sitetopdf.arg("--prefer-css-page-size");
+        }
+    }
+    if let Some(page_ranges) = &body.page_ranges {
+        sitetopdf.arg("--page-ranges").arg(page_ranges);
+    }
+    if let Some(ignore_http_errors) = body.ignore_http_errors {
+        if ignore_http_errors {
+            sitetopdf.arg("--ignore-http-errors");
+        }
+    }
+    if let Some(wait_until) = &body.wait_until {
+        sitetopdf.arg("--wait-until").arg(wait_until);
+    }
+    if let Some(timeout) = &body.timeout {
+        sitetopdf.arg("--timeout").arg(timeout);
+    }
+
+    let command = sitetopdf.output();
 
     match command {
         Ok(output) => {

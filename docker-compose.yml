@@ -1,0 +1,9 @@
+version: '3.9'
+
+services:
+  page2doc:
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./static:/app/static
+      - ./fonts:/app/fonts
