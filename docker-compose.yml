@@ -2,6 +2,7 @@ version: '3.9'
 
 services:
   page2doc:
+    image: htetlinmaung/page2doc
     ports:
       - "8080:8080"
     environment:
