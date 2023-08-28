@@ -4,14 +4,8 @@ FROM rust:slim-buster as builder
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Copy over your manifest
-COPY Cargo.toml Cargo.lock ./
-
-# Cache dependencies - this step will only re-run if your manifest changes
-RUN cargo fetch
-
-# Copy your source tree
-COPY src ./src
+# Copy the current directory contents into the container at /app
+COPY . /usr/src/app
 
 # Build for release
 RUN cargo build --release
