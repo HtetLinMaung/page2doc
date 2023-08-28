@@ -83,7 +83,7 @@ async fn create_files(body: web::Json<RequestBody>) -> impl Responder {
         });
     }
 
-    let host_name = env::var("host_name").unwrap_or("http://localhost:8080".to_string());
+    let host_name = env::var("HOST_NAME").unwrap_or("http://localhost:8080".to_string());
     let url = format!(
         "{}/page2doc/static/{}/index.html",
         host_name, unique_folder_name
