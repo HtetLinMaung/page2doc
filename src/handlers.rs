@@ -163,6 +163,9 @@ async fn create_files(body: web::Json<RequestBody>) -> impl Responder {
     match command {
         Ok(output) => {
             if !output.status.success() {
+                // Convert stderr bytes to a string and print it
+                let stderr_string = String::from_utf8_lossy(&output.stderr);
+                println!("Command Error: {}", stderr_string);
                 return HttpResponse::InternalServerError().json(ResponseBody {
                     code: 500,
                     message: "Failed to run sitetopdf command".into(),
