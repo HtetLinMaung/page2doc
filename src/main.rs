@@ -6,6 +6,7 @@ use dotenv::dotenv;
 use std::env;
 
 mod handlers;
+mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -17,9 +18,11 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new().service(
             web::scope("/page2doc")
-                .service(fs::Files::new("/static", "./static").show_files_listing())
                 .service(handlers::create_files)
-                .service(handlers::index),
+                .service(handlers::generate_token)
+                .service(handlers::index)
+                .service(fs::Files::new("/static", "./static").show_files_listing())
+                .service(handlers::get_pdf),
         )
     })
     .bind(("0.0.0.0", port))?

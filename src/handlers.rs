@@ -1,13 +1,21 @@
-use actix_web::{get, post, web, HttpResponse, Responder};
-use std::{env, fs, process::Command};
+use actix_web::{get, post, web, Error, HttpRequest, HttpResponse, Responder};
+use serde::{Deserialize, Serialize};
+use std::{
+    env, fs,
+    path::PathBuf,
+    process::Command,
+    time::{SystemTime, UNIX_EPOCH},
+};
 use uuid::Uuid;
+
+use crate::utils::{sign_token, verify_token, Claims};
 
 #[get("/")]
 async fn index() -> impl Responder {
     "Page to Document server is online"
 }
 
-#[derive(serde::Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 struct RequestBody {
     html: String,
     css: String,
@@ -29,7 +37,7 @@ struct RequestBody {
     timeout: Option<String>,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Serialize)]
 struct ResponseBody {
     code: u16,
     message: String,
@@ -81,7 +89,18 @@ async fn create_files(body: web::Json<RequestBody>) -> impl Responder {
         host_name, unique_folder_name
     );
 
-    let output_file = format!("{}/{}", &path, &body.file_name);
+    let pdf_folder_path = format!("pdf/{unique_folder_name}");
+    if !fs::metadata(&pdf_folder_path).is_ok() {
+        if let Err(_) = fs::create_dir_all(&pdf_folder_path) {
+            return HttpResponse::InternalServerError().json(ResponseBody {
+                code: 500,
+                message: "Internal Server Error".into(),
+                url: None,
+            });
+        }
+    }
+
+    let output_file = format!("{}/{}", &pdf_folder_path, &body.file_name);
     let mut sitetopdf = Command::new("sitetopdf");
     sitetopdf.arg("-u").arg(&url).arg("-o").arg(output_file);
 
@@ -179,8 +198,90 @@ async fn create_files(body: web::Json<RequestBody>) -> impl Responder {
         code: 200,
         message: "Report created successfully".into(),
         url: Some(format!(
-            "{}/page2doc/static/{}/{}",
+            "{}/page2doc/pdf/{}/{}",
             host_name, unique_folder_name, body.file_name
         )),
     })
+}
+
+#[derive(Deserialize)]
+struct TokenRequest {
+    exp: usize,
+}
+
+#[derive(Serialize)]
+struct TokenResponse {
+    code: u16,
+    message: String,
+    token: Option<String>,
+}
+
+#[post("/generate-token")]
+async fn generate_token(
+    req: HttpRequest,
+    body: web::Json<TokenRequest>,
+) -> Result<HttpResponse, actix_web::Error> {
+    let api_key = env::var("API_KEY").expect("API_KEY must be set");
+
+    if let Some(header_value) = req.headers().get("x-api-key") {
+        if header_value.to_str().unwrap() != api_key {
+            return Ok(HttpResponse::Unauthorized().json(TokenResponse {
+                code: 401,
+                message: "Unauthorized".to_string(),
+                token: None,
+            }));
+        }
+    } else {
+        return Ok(HttpResponse::Unauthorized().json(TokenResponse {
+            code: 401,
+            message: "Unauthorized".to_string(),
+            token: None,
+        }));
+    }
+
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_secs() as usize;
+    let claims = Claims {
+        exp: now + body.exp,
+    };
+    let token = match sign_token(&claims) {
+        Ok(t) => t,
+        Err(_) => {
+            return Ok(HttpResponse::InternalServerError().json(TokenResponse {
+                code: 500,
+                message: "Failed to generate token".to_string(),
+                token: None,
+            }));
+        }
+    };
+
+    Ok(HttpResponse::Ok().json(TokenResponse {
+        code: 200,
+        message: "Token generated successfully".to_string(),
+        token: Some(token),
+    }))
+}
+
+#[get("/pdf/{uuid}/{filename}")]
+async fn get_pdf(
+    req: HttpRequest,
+    path: web::Path<(String, String)>,
+) -> Result<HttpResponse, Error> {
+    // Extract JWT token from query parameter
+    let token: Option<String> = req.query_string().split('=').nth(1).map(|s| s.to_string());
+
+    // Verify JWT token
+    if token.is_none() || !verify_token(&token.unwrap()) {
+        return Ok(HttpResponse::Unauthorized().finish());
+    }
+    // Check if the file exists
+    let file_path = format!("./pdf/{}/{}", path.0, path.1);
+    if !PathBuf::from(&file_path).exists() {
+        return Ok(HttpResponse::NotFound().finish());
+    }
+
+    // Serve the PDF file
+    Ok(HttpResponse::Ok().body(actix_web::web::Bytes::from(std::fs::read(file_path)?)))
 }
