@@ -29,5 +29,8 @@ RUN npm install -g sitetopdf
 # Copy the binary from the builder stage
 COPY --from=builder /usr/src/app/target/release/page2doc /usr/local/bin/
 
+# Copy the static directory
+COPY ./static /static
+
 # Set the command to run your application
 CMD ["page2doc"]

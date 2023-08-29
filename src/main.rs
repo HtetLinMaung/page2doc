@@ -17,14 +17,12 @@ async fn main() -> std::io::Result<()> {
         .expect("Port must be number");
 
     HttpServer::new(|| {
-        let current_dir = std::env::current_dir().expect("Failed to get current directory");
-        let static_dir = current_dir.join("static");
         App::new().service(
             web::scope("/page2doc")
                 .service(handlers::create_files)
                 .service(handlers::generate_token)
                 .service(handlers::index)
-                .service(fs::Files::new("/static", static_dir).show_files_listing())
+                .service(fs::Files::new("/static", "./static").show_files_listing())
                 .service(handlers::get_pdf),
         )
     })
