@@ -163,6 +163,7 @@ async fn create_files(body: web::Json<RequestBody>) -> impl Responder {
 
     match command {
         Ok(output) => {
+            eprintln!("Stdout: {}", String::from_utf8_lossy(&output.stdout));
             if !output.status.success() {
                 // Convert stderr bytes to a string and print it
                 let stderr_string = String::from_utf8_lossy(&output.stderr);
