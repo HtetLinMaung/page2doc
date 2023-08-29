@@ -102,6 +102,7 @@ async fn create_files(body: web::Json<RequestBody>) -> impl Responder {
 
     let output_file = format!("{}/{}", &pdf_folder_path, &body.file_name);
     let mut sitetopdf = Command::new("sitetopdf");
+    println!("url: {url}");
     sitetopdf.arg("-u").arg(&url).arg("-o").arg(output_file);
 
     if let Some(format) = &body.format {
