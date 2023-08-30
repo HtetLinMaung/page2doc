@@ -61,7 +61,7 @@ async fn create_files(body: web::Json<RequestBody>) -> impl Responder {
     }
 
     let html_content = format!(
-        "<!DOCTYPE html>\n<html>\n<head>\n<link rel=\"stylesheet\" type=\"text/css\" href=\"../style.css\">\n</head>\n<body>\n{}\n</body>\n</html>",
+        "<!DOCTYPE html>\n<html>\n<head>\n<link rel=\"stylesheet\" type=\"text/css\" href=\"/page2doc/static/{}/style.css\">\n</head>\n<body>\n{}\n</body>\n</html>",unique_folder_name,
         body.html
     );
 
