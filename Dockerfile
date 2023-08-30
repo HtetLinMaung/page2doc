@@ -34,7 +34,7 @@ COPY --from=builder /usr/src/app/target/release/page2doc /usr/local/bin/
 COPY ./static /static
 
 # Copy the fonts directory
-COPY ./fonts /fonts
+# COPY ./fonts /fonts
 
 # Set the command to run your application
 CMD ["page2doc"]
