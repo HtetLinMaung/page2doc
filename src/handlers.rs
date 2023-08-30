@@ -179,13 +179,13 @@ async fn create_files(body: web::Json<RequestBody>) -> impl Responder {
                     url: None,
                 });
             }
-            // if let Err(_) = fs::remove_dir_all(&path) {
-            //     return HttpResponse::InternalServerError().json(ResponseBody {
-            //         code: 500,
-            //         message: "Failed to delete folder".into(),
-            //         url: None,
-            //     });
-            // }
+            if let Err(_) = fs::remove_dir_all(&path) {
+                return HttpResponse::InternalServerError().json(ResponseBody {
+                    code: 500,
+                    message: "Failed to delete folder".into(),
+                    url: None,
+                });
+            }
             // if let Err(_) = fs::remove_file(&html_path) {
             //     return HttpResponse::InternalServerError().json(ResponseBody {
             //         code: 500,
