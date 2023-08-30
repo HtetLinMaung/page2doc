@@ -31,10 +31,7 @@ RUN npm install -g sitetopdf
 COPY --from=builder /usr/src/app/target/release/page2doc /usr/local/bin/
 
 # Copy the static directory
-COPY ./static /static
-
-# Copy the fonts directory
-# COPY ./fonts /fonts
+# COPY ./static /static
 
 # Set the command to run your application
 CMD ["page2doc"]

@@ -19,10 +19,10 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new().service(
             web::scope("/page2doc")
-                .service(handlers::create_files)
+                .service(handlers::create_report)
                 .service(handlers::generate_token)
                 .service(handlers::index)
-                .service(fs::Files::new("/static", "./static").show_files_listing())
+                // .service(fs::Files::new("/static", "./static").show_files_listing())
                 .service(handlers::get_pdf),
         )
     })
